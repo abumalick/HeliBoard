@@ -32,6 +32,12 @@ class DictationManager(private val latinIME: LatinIME) {
 
     val isIdle get() = state.status == DictationStatus.IDLE
 
+    val isRecording get() = state.status == DictationStatus.RECORDING
+
+    /** Identifies the field a recording was started in, so a transcript cannot land in a different one. */
+    private fun currentField(): Pair<String?, Int>? =
+        latinIME.currentInputEditorInfo?.let { it.packageName to it.fieldId }
+
     fun onKeyPress(autoDetectLanguage: Boolean) {
         when (state.status) {
             DictationStatus.IDLE -> {
@@ -95,6 +101,7 @@ class DictationManager(private val latinIME: LatinIME) {
         }
         recorder = newRecorder
         recordingStartedAt = System.currentTimeMillis()
+        targetField = currentField()
         state.startRecording()
         notifyState()
     }
@@ -126,7 +133,12 @@ class DictationManager(private val latinIME: LatinIME) {
                     audioFile.delete()
                     state.onSuccess()
                     notifyState()
-                    if (result.text.isNotBlank()) latinIME.onTextInput(result.text)
+                    // the keyboard may have moved to another field while the request was in flight;
+                    // dropping the text is bad, but committing it into someone else's field is worse
+                    val field = currentField()
+                    if (result.text.isBlank()) Unit
+                    else if (field != null && field == targetField) latinIME.onTextInput(result.text)
+                    else Log.i(TAG, "input field changed during transcription, dropped ${result.text.length} chars")
                 }
                 is TranscriptionResult.Failure -> {
                     state.onFailure(result.reason)
@@ -163,6 +175,7 @@ class DictationManager(private val latinIME: LatinIME) {
     }
 
     private var recordingStartedAt = 0L
+    private var targetField: Pair<String?, Int>? = null
 
     companion object {
         private val TAG = DictationManager::class.simpleName

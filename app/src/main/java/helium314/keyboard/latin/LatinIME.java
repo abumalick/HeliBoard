@@ -804,7 +804,10 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onFinishInputView(final boolean finishingInput) {
-        if (dictationManager != null) dictationManager.abort();
+        // Only a live recording has to be stopped here: this fires on every rotation, and an
+        // in-flight transcription releases its recorder already and cannot leave the UI stuck,
+        // so aborting it would discard the audio and the transcript for nothing.
+        if (dictationManager != null && dictationManager.isRecording()) dictationManager.abort();
         StatsUtils.onFinishInputView();
         mHandler.onFinishInputView(finishingInput);
         mStatsUtilsManager.onFinishInputView();
