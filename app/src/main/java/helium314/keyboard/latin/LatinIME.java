@@ -705,6 +705,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onDestroy() {
         mClipboardHistoryManager.onDestroy();
+        if (dictationManager != null) dictationManager.destroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
         if (foldableObserver != null)
@@ -803,6 +804,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onFinishInputView(final boolean finishingInput) {
+        if (dictationManager != null) dictationManager.abort();
         StatsUtils.onFinishInputView();
         mHandler.onFinishInputView(finishingInput);
         mStatsUtilsManager.onFinishInputView();
