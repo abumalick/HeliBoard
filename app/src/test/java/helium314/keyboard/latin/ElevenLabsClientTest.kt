@@ -11,7 +11,10 @@ class ElevenLabsClientTest {
     @Test fun bodyContainsModelIdAndFilePart() {
         val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1, 2, 3), null).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"model_id\""))
-        assertTrue(body.contains("scribe_v1"))
+        assertTrue(body.contains("scribe_v2"))
+        // no_verbatim is a scribe_v2-only flag and is what keeps fillers out of the transcript
+        assertTrue(body.contains("name=\"no_verbatim\""))
+        assertTrue(body.contains("\r\n\r\ntrue\r\n"))
         assertTrue(body.contains("name=\"file\""))
         assertTrue(body.contains("filename=\"dictation.m4a\""))
         assertTrue(body.contains("Content-Type: audio/mp4"))

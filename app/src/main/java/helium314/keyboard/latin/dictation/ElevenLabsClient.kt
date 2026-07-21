@@ -15,7 +15,7 @@ sealed interface TranscriptionResult {
 object ElevenLabsClient {
 
     private const val ENDPOINT = "https://api.elevenlabs.io/v1/speech-to-text"
-    private const val MODEL_ID = "scribe_v1"
+    private const val MODEL_ID = "scribe_v2"
     private const val BOUNDARY = "----HeliBoardDictation7f3a9c"
     private const val FILE_NAME = "dictation.m4a"
     private const val CONNECT_TIMEOUT_MS = 10_000
@@ -30,6 +30,8 @@ object ElevenLabsClient {
         }
 
         writeField("model_id", MODEL_ID)
+        // drops filler words, false starts and repeated words at the source; scribe_v2 only
+        writeField("no_verbatim", "true")
         if (languageCode != null) writeField("language_code", languageCode)
 
         out.write("--$BOUNDARY\r\n".toByteArray())
