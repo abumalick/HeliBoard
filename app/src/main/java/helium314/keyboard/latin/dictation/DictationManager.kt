@@ -122,6 +122,7 @@ class DictationManager(private val latinIME: LatinIME) {
             if (!isActive) return@launch
             when (result) {
                 is TranscriptionResult.Success -> {
+                    Log.i(TAG, "transcribed ${result.text.length} chars from ${audioFile.length()} bytes of audio")
                     audioFile.delete()
                     state.onSuccess()
                     notifyState()
@@ -146,10 +147,15 @@ class DictationManager(private val latinIME: LatinIME) {
      * A failure with no audio to resend. The state machine stays IDLE; this only paints a
      * transient message, and canRetry is false so no dead Retry button is offered.
      */
-    private fun fail(reason: String) = onStateChanged?.invoke(DictationStatus.ERROR, reason, false)
+    private fun fail(reason: String) {
+        Log.i(TAG, "failed with no audio to retry: $reason")
+        onStateChanged?.invoke(DictationStatus.ERROR, reason, false)
+    }
 
-    private fun notifyState() =
+    private fun notifyState() {
+        Log.i(TAG, "state=${state.status}${state.errorReason?.let { " reason=$it" } ?: ""}")
         onStateChanged?.invoke(state.status, state.errorReason, state.status == DictationStatus.ERROR)
+    }
 
     fun destroy() {
         abort()
