@@ -16,7 +16,7 @@
     { "label": "shift", "width": 0.1 },
     { "type": "placeholder" },
     { "label": "!icon/voice", "code": -10055,
-      "popup": { "relevant": [ { "label": "!noPanelAutoPopupKey!" }, { "code": -10056 } ] } }
+      "popup": { "relevant": [ { "label": "!noPanelAutoPopupKey!" }, { "label": " ", "code": -10056 } ] } }
   ],
   [
     { "label": "symbol_alpha" },

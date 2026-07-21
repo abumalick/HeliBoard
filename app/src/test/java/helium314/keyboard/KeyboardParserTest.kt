@@ -499,6 +499,31 @@ f""", // no newline at the end
         }
     }
 
+    // A popup key declaring a code but no label produces the spec "|!code/<code>", which
+    // KeySpecParser rejects with "Empty label" only once a real keyboard is built. Keyboard.Builder
+    // catches that, so the failure shows up as a keyboard that silently never appears rather than as
+    // a crash -- and parseExistingLayouts above does not reach the popup path that throws.
+    @Test fun `popup key specs in existing layouts are not label-less`() {
+        val dir = File("src/main/assets/layouts")
+        dir.walk().forEach { file ->
+            if (file.isDirectory) return@forEach
+            val content = file.readText()
+            val data = if (file.name.endsWith(".json"))
+                LayoutParser.parseJsonString(content)
+            else LayoutParser.parseSimpleString(content)
+            data.flatten().forEach { key ->
+                key.compute(params)?.popup?.getPopupKeyLabels(params)?.forEach { spec ->
+                    // a bare "|" carries nothing and is dropped by PopupKeySpec.filterOutEmptyString;
+                    // "|" followed by a code or output text survives that filter and then throws
+                    assertTrue(
+                        !spec.startsWith("|") || spec.length == 1,
+                        "${file.name}: popup spec \"$spec\" has an empty label; give the popup key a label"
+                    )
+                }
+            }
+        }
+    }
+
     @Test fun simpleWithLabelPopupHasCode() {
         val keys = LayoutParser.parseSimpleString("""
             a symbol
