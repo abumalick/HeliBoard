@@ -25,6 +25,7 @@ import android.os.Process;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.CompletionInfo;
@@ -57,12 +58,15 @@ import helium314.keyboard.keyboard.KeyboardSwitcher;
 import helium314.keyboard.keyboard.MainKeyboardView;
 import helium314.keyboard.latin.SuggestedWords.SuggestedWordInfo;
 import helium314.keyboard.latin.common.ColorType;
+import helium314.keyboard.latin.common.Colors;
 import helium314.keyboard.latin.common.Constants;
 import helium314.keyboard.latin.common.CoordinateUtils;
 import helium314.keyboard.latin.common.InputPointers;
 import helium314.keyboard.latin.common.ViewOutlineProviderUtilsKt;
+import helium314.keyboard.latin.databinding.DictationStatusBinding;
 import helium314.keyboard.latin.define.DebugFlags;
 import helium314.keyboard.latin.dictation.DictationManager;
+import helium314.keyboard.latin.dictation.DictationStatus;
 import helium314.keyboard.latin.inputlogic.InputLogic;
 import helium314.keyboard.latin.personalization.PersonalizationHelper;
 import helium314.keyboard.latin.settings.Settings;
@@ -554,6 +558,10 @@ public class LatinIME extends InputMethodService implements
         loadSettings();
         mClipboardHistoryManager.onCreate();
         dictationManager = new DictationManager(this);
+        dictationManager.setOnStateChanged((status, reason, canRetry) -> {
+            showDictationStatus(status, reason, canRetry);
+            return Unit.INSTANCE;
+        });
         mHandler.onCreate();
         if (FoldableUtils.INSTANCE.isFoldable())
             foldableObserver = new FoldableUtils.FoldableObserver(this);
@@ -1598,6 +1606,57 @@ public class LatinIME extends InputMethodService implements
     public void removeExternalSuggestions() {
         setNeutralSuggestionStrip();
         mHandler.postResumeSuggestions(false);
+    }
+
+    public void showDictationStatus(final DictationStatus status, final String reason, final boolean canRetry) {
+        // Must come before every early return below, or a key locked while recording would never
+        // be unlocked -- leaving the mic key stuck in the pressed state.
+        final MainKeyboardView mkv = mKeyboardSwitcher.getMainKeyboardView();
+        if (mkv != null) {
+            final boolean recording = status == DictationStatus.RECORDING;
+            mkv.updateLockState(KeyCode.DICTATION, recording);
+            mkv.updateLockState(KeyCode.DICTATION_AUTO_LANG, recording);
+        }
+
+        if (!hasSuggestionStripView()) return;
+        if (status == DictationStatus.IDLE) {
+            removeExternalSuggestions();
+            return;
+        }
+        final DictationStatusBinding binding =
+                DictationStatusBinding.inflate(LayoutInflater.from(this), mSuggestionStripView, false);
+        final Colors colors = mSettings.getCurrent().mColors;
+        colors.setBackground(binding.getRoot(), ColorType.STRIP_BACKGROUND);
+        binding.dictationStatusText.setTextColor(colors.get(ColorType.KEY_TEXT));
+        binding.dictationPrimaryAction.setTextColor(colors.get(ColorType.TOOL_BAR_KEY));
+        binding.dictationCancelAction.setTextColor(colors.get(ColorType.TOOL_BAR_KEY));
+
+        binding.dictationCancelAction.setText(R.string.dictation_cancel);
+        binding.dictationCancelAction.setOnClickListener(v -> dictationManager.cancel());
+
+        switch (status) {
+            case RECORDING:
+                binding.dictationStatusText.setText(R.string.dictation_recording);
+                binding.dictationPrimaryAction.setVisibility(View.VISIBLE);
+                binding.dictationPrimaryAction.setText(R.string.dictation_stop);
+                binding.dictationPrimaryAction.setOnClickListener(v -> dictationManager.onKeyPress(false));
+                break;
+            case TRANSCRIBING:
+                binding.dictationStatusText.setText(R.string.dictation_transcribing);
+                binding.dictationPrimaryAction.setVisibility(View.GONE);
+                break;
+            case ERROR:
+                binding.dictationStatusText.setText(getString(R.string.dictation_failed, reason));
+                // Retry only when there is audio on disk to resend; otherwise the button would
+                // be refused by the state machine and appear dead.
+                binding.dictationPrimaryAction.setVisibility(canRetry ? View.VISIBLE : View.GONE);
+                binding.dictationPrimaryAction.setText(R.string.dictation_retry);
+                binding.dictationPrimaryAction.setOnClickListener(v -> dictationManager.retry());
+                break;
+            default:
+                break;
+        }
+        mSuggestionStripView.setExternalSuggestionView(binding.getRoot(), false);
     }
 
     private void loadKeyboard() {

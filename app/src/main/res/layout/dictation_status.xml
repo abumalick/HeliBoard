@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/dictation_status_text"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:paddingStart="12dp"
+        android:paddingEnd="6dp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        style="?android:attr/textAppearanceSmall" />
+    <TextView
+        android:id="@+id/dictation_primary_action"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="14dp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:visibility="gone"
+        style="?android:attr/textAppearanceSmall" />
+    <TextView
+        android:id="@+id/dictation_cancel_action"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="14dp"
+        android:gravity="center"
+        android:textStyle="bold"
+        style="?android:attr/textAppearanceSmall" />
+</LinearLayout>
