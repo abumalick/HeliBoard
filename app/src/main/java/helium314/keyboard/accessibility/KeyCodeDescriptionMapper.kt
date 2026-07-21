@@ -30,6 +30,8 @@ internal class KeyCodeDescriptionMapper private constructor() {
         put(KeyCode.SETTINGS, R.string.spoken_description_settings)
         put(KeyCode.SHIFT, R.string.spoken_description_shift)
         put(KeyCode.VOICE_INPUT, R.string.spoken_description_mic)
+        put(KeyCode.DICTATION, R.string.spoken_description_mic)
+        put(KeyCode.DICTATION_AUTO_LANG, R.string.spoken_description_mic)
         put(KeyCode.SYMBOL_ALPHA, R.string.spoken_description_to_symbol)
         put(Constants.CODE_TAB, R.string.spoken_description_tab)
         put(KeyCode.LANGUAGE_SWITCH, R.string.spoken_description_language_switch)
