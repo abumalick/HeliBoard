@@ -6,6 +6,7 @@ import helium314.keyboard.keyboard.Key
 import helium314.keyboard.keyboard.KeyboardElement
 import helium314.keyboard.keyboard.internal.KeyboardParams
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyData
+import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyLabel
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.toTextKey
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.splitOnFirstSpacesOnly
@@ -97,7 +98,7 @@ class LocaleKeyboardInfos(dataStream: InputStream?, locale: Locale) {
         return when (element) {
             KeyboardElement.SYMBOLS -> listOf("\\".toTextKey(labelFlags = flags), "=".toTextKey(labelFlags = flags)) to emptyList()
             KeyboardElement.SYMBOLS_SHIFTED -> emptyList<KeyData>() to listOf("¡".toTextKey(labelFlags = flags), "¿".toTextKey(labelFlags = flags))
-            else -> emptyList<KeyData>() to listOf("!".toTextKey(labelFlags = flags), labelQuestion.toTextKey(labelFlags = flags)) // assume alphabet
+            else -> emptyList<KeyData>() to listOf(KeyLabel.DPAD.toTextKey(), labelQuestion.toTextKey(labelFlags = flags)) // assume alphabet
         }
     }
 

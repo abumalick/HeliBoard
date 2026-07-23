@@ -125,14 +125,10 @@ sealed interface KeyData : AbstractKeyData {
                 for (i in popupKeys.indices)
                     popupKeys[i] = popupKeys[i].rtlLabel(params) // for parentheses
             }
-            if (params.setTabletExtraKeys && popupKeys.contains("!") && popupKeys.contains("?")) {
-                // remove ! and ? keys and reduce number in autoColumnOrder
+            if (params.setTabletExtraKeys && popupKeys.contains("?")) {
+                // ? has its own key on tablets, ! does not, so only ? is removed here
                 // this makes use of removal of empty popupKeys in PopupKeySpec.insertAdditionalPopupKeys
-                popupKeys[popupKeys.indexOf("!")] = ""
                 popupKeys[popupKeys.indexOf("?")] = ""
-                val columns = popupKeys[0].substringAfter(Key.POPUP_KEYS_AUTO_COLUMN_ORDER).toIntOrNull()
-                if (columns != null)
-                    popupKeys[0] = "${Key.POPUP_KEYS_AUTO_COLUMN_ORDER}${columns - 1}"
             }
             return popupKeys
         }
