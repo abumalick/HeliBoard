@@ -4,6 +4,7 @@ package helium314.keyboard.latin.dictation
 import android.media.MediaRecorder
 import android.os.Build
 import helium314.keyboard.latin.LatinIME
+import helium314.keyboard.latin.R
 import helium314.keyboard.latin.RichInputMethodManager
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
@@ -30,6 +31,11 @@ class DictationManager(private val latinIME: LatinIME) {
 
     var onStateChanged: ((status: DictationStatus, reason: String?, canRetry: Boolean) -> Unit)? = null
 
+    init {
+        // the process can be killed while an unsent recording is on disk, so nothing else would remove it
+        audioFile.delete()
+    }
+
     val isIdle get() = state.status == DictationStatus.IDLE
 
     val isRecording get() = state.status == DictationStatus.RECORDING
@@ -41,12 +47,27 @@ class DictationManager(private val latinIME: LatinIME) {
     fun onKeyPress(autoDetectLanguage: Boolean) {
         when (state.status) {
             DictationStatus.IDLE -> {
+                if (!mayRecordHere()) {
+                    fail(latinIME.getString(R.string.dictation_not_here))
+                    return
+                }
                 this.autoDetectLanguage = autoDetectLanguage
                 startRecording()
             }
             DictationStatus.RECORDING -> stopRecordingAndTranscribe()
             DictationStatus.TRANSCRIBING, DictationStatus.ERROR -> cancel()
         }
+    }
+
+    /**
+     * Dictation uploads speech to a third party, so it must not start where the content is meant to
+     * stay private: password fields, and incognito (which also covers an app asking for no learning).
+     * Deliberately does not use [InputAttributes.mShouldShowVoiceInputKey], which is false whenever no
+     * system voice IME is installed - irrelevant here, since this does not delegate to one.
+     */
+    private fun mayRecordHere(): Boolean {
+        val values = Settings.getValues()
+        return !values.mInputAttributes.mIsPasswordField && !values.mIncognitoModeEnabled
     }
 
     fun retry() {
@@ -165,7 +186,9 @@ class DictationManager(private val latinIME: LatinIME) {
     }
 
     private fun notifyState() {
-        Log.i(TAG, "state=${state.status}${state.errorReason?.let { " reason=$it" } ?: ""}")
+        // the reason is deliberately not logged: it can carry the API's own response text, and this
+        // logger also feeds an in-app buffer the user can export
+        Log.i(TAG, "state=${state.status}")
         onStateChanged?.invoke(state.status, state.errorReason, state.status == DictationStatus.ERROR)
     }
 

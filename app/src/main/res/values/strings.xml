@@ -1306,12 +1306,13 @@ New dictionary:
      string will probably be removed once data gathering is finished (end of 2026 latest) -->
     <string name="gesture_data_swipe_o_scope">Tool for visualizing gesture data: &lt;a href=%s&gt;Swipe-O-Scope&lt;/a&gt;</string>
 
-    <string name="dictation_recording">● Recording…</string>
-    <string name="dictation_transcribing">Transcribing…</string>
-    <string name="dictation_failed">Failed: %s</string>
-    <string name="dictation_stop">Stop</string>
-    <string name="dictation_retry">Retry</string>
-    <string name="dictation_cancel">Cancel</string>
+    <string name="dictation_recording" translatable="false">● Recording…</string>
+    <string name="dictation_transcribing" translatable="false">Transcribing…</string>
+    <string name="dictation_failed" translatable="false">Failed: %s</string>
+    <string name="dictation_stop" translatable="false">Stop</string>
+    <string name="dictation_retry" translatable="false">Retry</string>
+    <string name="dictation_cancel" translatable="false">Cancel</string>
+    <string name="dictation_not_here" translatable="false">Dictation is off in private fields</string>
 
     <!-- new strings should go above the section for gesture data gathering -->
 </resources>
