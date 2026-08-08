@@ -32,6 +32,8 @@ object ElevenLabsClient {
         writeField("model_id", MODEL_ID)
         // drops filler words, false starts and repeated words at the source; scribe_v2 only
         writeField("no_verbatim", "true")
+        // separate flag, defaults to true: annotates background noise as "(baby crying)" etc.
+        writeField("tag_audio_events", "false")
         if (languageCode != null) writeField("language_code", languageCode)
 
         out.write("--$BOUNDARY\r\n".toByteArray())

@@ -15,6 +15,9 @@ class ElevenLabsClientTest {
         // no_verbatim is a scribe_v2-only flag and is what keeps fillers out of the transcript
         assertTrue(body.contains("name=\"no_verbatim\""))
         assertTrue(body.contains("\r\n\r\ntrue\r\n"))
+        // tag_audio_events defaults to true server-side and annotates background noise
+        assertTrue(body.contains("name=\"tag_audio_events\""))
+        assertTrue(body.contains("\r\n\r\nfalse\r\n"))
         assertTrue(body.contains("name=\"file\""))
         assertTrue(body.contains("filename=\"dictation.m4a\""))
         assertTrue(body.contains("Content-Type: audio/mp4"))
