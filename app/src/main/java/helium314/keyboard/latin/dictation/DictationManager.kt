@@ -204,7 +204,9 @@ class DictationManager(private val latinIME: LatinIME) {
         private val TAG = DictationManager::class.simpleName
         private const val SAMPLE_RATE_HZ = 16_000
         private const val BIT_RATE = 32_000
-        private const val MAX_DURATION_MS = 60_000
+        // the recording is meant to end when the user stops it; this is only a backstop so a
+        // forgotten recording cannot hold the microphone (and the screen, see LatinIME) forever
+        private const val MAX_DURATION_MS = 30 * 60_000
         private const val MIN_DURATION_MS = 300L
     }
 }

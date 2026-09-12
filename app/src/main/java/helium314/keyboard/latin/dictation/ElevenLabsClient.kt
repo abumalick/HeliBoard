@@ -19,7 +19,9 @@ object ElevenLabsClient {
     private const val BOUNDARY = "----HeliBoardDictation7f3a9c"
     private const val FILE_NAME = "dictation.m4a"
     private const val CONNECT_TIMEOUT_MS = 10_000
-    private const val READ_TIMEOUT_MS = 60_000
+    // the API answers only once it has transcribed the whole file, so this has to cover the
+    // longest recording the recorder allows, not a typical one
+    private const val READ_TIMEOUT_MS = 5 * 60_000
 
     fun buildMultipartBody(audio: ByteArray, languageCode: String?): ByteArray {
         val out = ByteArrayOutputStream()
