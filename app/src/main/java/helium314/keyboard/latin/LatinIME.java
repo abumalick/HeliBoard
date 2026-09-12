@@ -28,6 +28,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InlineSuggestion;
@@ -1622,6 +1623,11 @@ public class LatinIME extends InputMethodService implements
             mkv.updateLockState(KeyCode.DICTATION, recording);
             mkv.updateLockState(KeyCode.DICTATION_AUTO_LANG, recording);
         }
+        // Dictating is a long stretch without touching the screen, so the display would time out --
+        // and the screen going off hides the input view, which aborts the recording (onFinishInputView)
+        // or leaves a finished transcript with no field to commit into. Also covers ERROR's early
+        // return below, so the flag can never be left set.
+        setKeepScreenOn(status == DictationStatus.RECORDING || status == DictationStatus.TRANSCRIBING);
 
         if (!hasSuggestionStripView()) return;
         if (status == DictationStatus.IDLE) {
@@ -1662,6 +1668,16 @@ public class LatinIME extends InputMethodService implements
                 break;
         }
         mSuggestionStripView.setExternalSuggestionView(binding.getRoot(), false);
+    }
+
+    private void setKeepScreenOn(final boolean keepScreenOn) {
+        final Window window = getWindow().getWindow();
+        if (window == null)
+            return;
+        if (keepScreenOn)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void loadKeyboard() {
