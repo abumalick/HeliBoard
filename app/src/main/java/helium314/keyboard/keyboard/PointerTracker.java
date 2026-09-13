@@ -769,6 +769,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             case Constants.CODE_SPACE -> sv.mSpaceSwipeHorizontal != KeyboardActionListener.SwipeAction.NONE
                     || sv.mSpaceSwipeVertical != KeyboardActionListener.SwipeAction.NONE;
             case KeyCode.DELETE -> sv.mDeleteSwipeEnabled;
+            case KeyCode.DPAD -> true;
             default -> false;
         };
     }
@@ -989,6 +990,29 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
                 mStartX += steps * sPointerStep;
                 sListener.onMoveDeletePointer(steps);
             }
+        } else if (code == KeyCode.DPAD) {
+            // joystick: the first direction is kept until release, each step sends one arrow key
+            final int stepsX = (x - mStartX) / sPointerStep;
+            final int stepsY = (y - mStartY) / sPointerStep;
+            if (!mInHorizontalSwipe && !mInVerticalSwipe) {
+                if (stepsX == 0 && stepsY == 0) return;
+                sTimerProxy.cancelKeyTimersOf(this);
+                if (abs(stepsX) >= abs(stepsY)) mInHorizontalSwipe = true;
+                else mInVerticalSwipe = true;
+            }
+            final int steps;
+            final int arrowCode;
+            if (mInHorizontalSwipe) {
+                steps = stepsX;
+                mStartX += steps * sPointerStep;
+                arrowCode = steps > 0 ? KeyCode.ARROW_RIGHT : KeyCode.ARROW_LEFT;
+            } else {
+                steps = stepsY;
+                mStartY += steps * sPointerStep;
+                arrowCode = steps > 0 ? KeyCode.ARROW_DOWN : KeyCode.ARROW_UP;
+            }
+            for (int i = 0; i < abs(steps); i++)
+                sListener.onCodeInput(arrowCode, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
         }
     }
 
@@ -1106,7 +1130,8 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             // Touchpad mode
             mTouchpadHandler.disableTouchpadMode();
 
-            if (mInHorizontalSwipe || mInVerticalSwipe) {
+            // the dpad key is only a joystick, a tap does nothing
+            if (mInHorizontalSwipe || mInVerticalSwipe || currentKey.getCode() == KeyCode.DPAD) {
                 mInHorizontalSwipe = false;
                 mInVerticalSwipe = false;
                 sListener.onEndSpaceSwipe();
