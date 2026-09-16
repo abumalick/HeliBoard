@@ -8,6 +8,24 @@ plugins {
     kotlin("plugin.compose") version "2.3.20"
 }
 
+// Dictation vocabulary baked into BuildConfig, read from the file $STT_KEYTERMS_FILE points at
+// (kept with the user's dotfiles, shared with the Perch agent). Unset variable or missing file =
+// no vocabulary, which is just how dictation worked before. The limits mirror what the API
+// accepts — under 50 characters, at most 5 words, none of <>{}[]\ — and the 100-term cap avoids
+// its 20-second minimum billing per clip.
+fun sttKeyterms(): String {
+    val path = System.getenv("STT_KEYTERMS_FILE")
+    val file = path?.let { File(it) }
+    if (file != null && !file.isFile) logger.warn("STT_KEYTERMS_FILE is set but $path does not exist; dictation gets no keyterms")
+    val terms = file?.takeIf { it.isFile }?.readLines().orEmpty()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .filter { it.length <= 50 && it.split(Regex("\\s+")).size <= 5 && !it.contains(Regex("[<>{}\\[\\]\\\\]")) }
+        .distinctBy { it.lowercase() }
+        .take(100)
+    return terms.joinToString(", ", "{", "}") { "\"${it.replace("\"", "\\\"")}\"" }
+}
+
 android {
     compileSdk = 36
 
@@ -22,6 +40,7 @@ android {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        buildConfigField("String[]", "STT_KEYTERMS", sttKeyterms())
     }
 
     buildTypes {

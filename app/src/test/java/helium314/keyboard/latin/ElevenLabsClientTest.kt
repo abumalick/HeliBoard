@@ -2,6 +2,7 @@
 package helium314.keyboard.latin
 
 import helium314.keyboard.latin.dictation.ElevenLabsClient
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,7 +10,7 @@ import org.junit.Test
 class ElevenLabsClientTest {
 
     @Test fun bodyContainsModelIdAndFilePart() {
-        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1, 2, 3), null).decodeToString(throwOnInvalidSequence = false)
+        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1, 2, 3), null, emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"model_id\""))
         assertTrue(body.contains("scribe_v2"))
         // no_verbatim is a scribe_v2-only flag and is what keeps fillers out of the transcript
@@ -24,24 +25,39 @@ class ElevenLabsClientTest {
     }
 
     @Test fun languageCodeOmittedWhenNull() {
-        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), null).decodeToString(throwOnInvalidSequence = false)
+        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), null, emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertFalse(body.contains("name=\"language_code\""))
     }
 
+    // The API takes a vocabulary as one repeated part per term, not a joined string.
+    @Test fun keytermsAreSentAsOnePartEach() {
+        val body = ElevenLabsClient
+            .buildMultipartBody(byteArrayOf(1), null, listOf("Perch", "Claude Code"))
+            .decodeToString(throwOnInvalidSequence = false)
+        assertEquals(2, Regex("name=\"keyterms\"").findAll(body).count())
+        assertTrue(body.contains("\r\n\r\nPerch\r\n"))
+        assertTrue(body.contains("\r\n\r\nClaude Code\r\n"))
+    }
+
+    @Test fun keytermsOmittedWhenVocabularyIsEmpty() {
+        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), null, emptyList()).decodeToString(throwOnInvalidSequence = false)
+        assertFalse(body.contains("name=\"keyterms\""))
+    }
+
     @Test fun languageCodeIncludedWhenGiven() {
-        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), "ar").decodeToString(throwOnInvalidSequence = false)
+        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), "ar", emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"language_code\""))
         assertTrue(body.contains("\r\n\r\nar\r\n"))
     }
 
     @Test fun bodyIsTerminatedByClosingBoundary() {
-        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), "en").decodeToString(throwOnInvalidSequence = false)
+        val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), "en", emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.trimEnd().endsWith("--"))
     }
 
     @Test fun audioBytesSurviveEncodingUnchanged() {
         val audio = byteArrayOf(0x00, 0x7F, -0x80, -0x01)
-        val body = ElevenLabsClient.buildMultipartBody(audio, null)
+        val body = ElevenLabsClient.buildMultipartBody(audio, null, emptyList())
         assertTrue(indexOfSubarray(body, audio) >= 0)
     }
 

@@ -26,7 +26,7 @@ class DictationManager(private val latinIME: LatinIME) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var recorder: MediaRecorder? = null
     private var transcribeJob: Job? = null
-    private var autoDetectLanguage = false
+    private var forceSubtypeLanguage = false
     private val audioFile: File get() = File(latinIME.cacheDir, "dictation.m4a")
 
     var onStateChanged: ((status: DictationStatus, reason: String?, canRetry: Boolean) -> Unit)? = null
@@ -44,14 +44,14 @@ class DictationManager(private val latinIME: LatinIME) {
     private fun currentField(): Pair<String?, Int>? =
         latinIME.currentInputEditorInfo?.let { it.packageName to it.fieldId }
 
-    fun onKeyPress(autoDetectLanguage: Boolean) {
+    fun onKeyPress(forceSubtypeLanguage: Boolean) {
         when (state.status) {
             DictationStatus.IDLE -> {
                 if (!mayRecordHere()) {
                     fail(latinIME.getString(R.string.dictation_not_here))
                     return
                 }
-                this.autoDetectLanguage = autoDetectLanguage
+                this.forceSubtypeLanguage = forceSubtypeLanguage
                 startRecording()
             }
             DictationStatus.RECORDING -> stopRecordingAndTranscribe()
@@ -144,7 +144,12 @@ class DictationManager(private val latinIME: LatinIME) {
 
     private fun launchTranscription() {
         val token = latinIME.prefs().getString(Settings.PREF_ELEVENLABS_API_KEY, Defaults.PREF_ELEVENLABS_API_KEY).orEmpty()
-        val language = if (autoDetectLanguage) null else RichInputMethodManager.getInstance().currentSubtypeLocale.language
+        // A plain tap lets Scribe detect the language: dictation here mixes French and English
+        // within one session, and forcing the keyboard's subtype transcribed the other language
+        // phonetically. The secondary key (still KeyCode.DICTATION_AUTO_LANG, whose name predates
+        // this swap) forces the subtype instead — worth having for Arabic, which Scribe detects
+        // less reliably.
+        val language = if (forceSubtypeLanguage) RichInputMethodManager.getInstance().currentSubtypeLocale.language else null
         transcribeJob = scope.launch {
             val result = withContext(Dispatchers.IO) { ElevenLabsClient.transcribe(token, audioFile, language) }
             if (!isActive) return@launch

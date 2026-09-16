@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.latin.dictation
 
+import helium314.keyboard.latin.BuildConfig
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -23,7 +24,11 @@ object ElevenLabsClient {
     // longest recording the recorder allows, not a typical one
     private const val READ_TIMEOUT_MS = 5 * 60_000
 
-    fun buildMultipartBody(audio: ByteArray, languageCode: String?): ByteArray {
+    fun buildMultipartBody(
+        audio: ByteArray,
+        languageCode: String?,
+        keyterms: List<String> = BuildConfig.STT_KEYTERMS.toList(),
+    ): ByteArray {
         val out = ByteArrayOutputStream()
         fun writeField(name: String, value: String) {
             out.write("--$BOUNDARY\r\n".toByteArray())
@@ -37,6 +42,9 @@ object ElevenLabsClient {
         // separate flag, defaults to true: annotates background noise as "(baby crying)" etc.
         writeField("tag_audio_events", "false")
         if (languageCode != null) writeField("language_code", languageCode)
+        // jargon and proper nouns the model would otherwise mishear; one repeated part per term is
+        // how the API takes a vocabulary. Validated and capped when baked into BuildConfig.
+        for (term in keyterms) writeField("keyterms", term)
 
         out.write("--$BOUNDARY\r\n".toByteArray())
         out.write("Content-Disposition: form-data; name=\"file\"; filename=\"$FILE_NAME\"\r\n".toByteArray())
