@@ -1709,6 +1709,10 @@ public final class InputLogic {
             mDictionaryFacilitator.adjustConfidences(word, wasAutoCapitalized);
             return;
         }
+        if (isStuckKeyWord(word)) {
+            mDictionaryFacilitator.adjustConfidences(word, wasAutoCapitalized);
+            return;
+        }
         if (mConnection.hasSlowInputConnection()) {
             // Since we don't unlearn when the user backspaces on a slow InputConnection,
             // turn off learning to guard against adding typos that the user later deletes.
@@ -1720,6 +1724,19 @@ public final class InputLogic {
         final int timeStampInSeconds = (int)TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         mDictionaryFacilitator.addToUserHistory(word, wasAutoCapitalized, ngramContext,
                 timeStampInSeconds, settingsValues.mBlockPotentiallyOffensive);
+    }
+
+    // Real words repeat a character at most 3 times in a row; longer runs come from a key held down or pressed by accident.
+    static boolean isStuckKeyWord(final String word) {
+        int run = 0;
+        int previous = -1;
+        for (int i = 0; i < word.length(); i += Character.charCount(previous)) {
+            final int codePoint = word.codePointAt(i);
+            run = codePoint == previous ? run + 1 : 1;
+            if (run >= 4) return true;
+            previous = codePoint;
+        }
+        return false;
     }
 
     private void addToHistoryIfEmoji(final String text, final SettingsValues settingsValues) {
