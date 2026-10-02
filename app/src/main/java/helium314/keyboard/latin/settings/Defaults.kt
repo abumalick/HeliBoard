@@ -134,8 +134,9 @@ object Defaults {
     const val PREFS_LONG_PRESS_SYMBOLS_FOR_NUMPAD = false
     const val PREF_ONE_HANDED_MODE = false
     @SuppressLint("RtlHardcoded")
-    const val PREF_ONE_HANDED_GRAVITY = Gravity.LEFT
-    const val PREF_ONE_HANDED_SCALE = 1f
+    const val PREF_ONE_HANDED_GRAVITY = Gravity.RIGHT
+    // shrinks the one-handed width loss: 1.875 turns the tablet's 76% into 55%
+    const val PREF_ONE_HANDED_SCALE = 1.875f
     const val PREF_SHOW_NUMBER_ROW = false
     const val PREF_SHOW_NUMBER_ROW_IN_SYMBOLS = true
     const val PREF_LOCALIZED_NUMBER_ROW = true

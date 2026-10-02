@@ -11,7 +11,8 @@
   [
     { "$": "keyboard_state_selector", "dpad": { "type": "placeholder", "width": 0.1 } },
     { "type": "placeholder" },
-    { "label": "/", "width": 0.1, "labelFlags": 1073741824, "type": "function" }
+    { "label": "/", "width": 0.1, "labelFlags": 1073741824, "type": "function",
+      "popup": { "relevant": [ { "label": "!noPanelAutoPopupKey!" }, { "label": "!icon/start_onehanded_mode_key", "code": -10002 } ] } }
   ],
   [
     { "label": "shift", "width": 0.1 },
