@@ -545,7 +545,12 @@ public class KeyboardView extends View {
                 : (keyHeight - iconHeight) / 2; // Align vertically center.
             int iconX = (keyWidth - iconWidth) / 2; // Align horizontally center.
             setKeyIconColor(key, icon, keyboard);
+            // shift turns backspace into forward delete, so point the icon the other way
+            final boolean flip = key.getCode() == KeyCode.DELETE && keyboard != null
+                    && keyboard.mId.getElement().isAlphabetShiftedManually();
+            if (flip) canvas.rotate(180, iconX + iconWidth / 2f, iconY + iconHeight / 2f);
             drawIcon(canvas, icon, iconX, iconY, iconWidth, iconHeight);
+            if (flip) canvas.rotate(-180, iconX + iconWidth / 2f, iconY + iconHeight / 2f);
         }
     }
 

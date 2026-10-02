@@ -110,6 +110,7 @@ public final class InputLogic {
     private final RecapitalizeStatus mRecapitalizeStatus = new RecapitalizeStatus();
 
     private int mDeleteCount;
+    private boolean mForwardDeleting;
     private long mLastKeyTime;
     // todo: this is not used, so either remove it or do something with it
     public final TreeSet<Long> mCurrentlyPressedHardwareKeys = new TreeSet<>();
@@ -724,7 +725,10 @@ public final class InputLogic {
         }
         switch (keyCode) {
             case KeyCode.DELETE:
-                handleBackspaceEvent(event, inputTransaction, currentKeyboardScript);
+                if (isForwardDelete(event))
+                    handleForwardDeleteEvent(inputTransaction);
+                else
+                    handleBackspaceEvent(event, inputTransaction, currentKeyboardScript);
                 // Backspace is a functional key, but it affects the contents of the editor.
                 inputTransaction.setDidAffectContents();
                 break;
@@ -1265,6 +1269,28 @@ public final class InputLogic {
      * @param event The event to handle.
      * @param inputTransaction The transaction in progress.
      */
+    /**
+     * Backspace deletes forward while shift is manually on. A one-shot shift is released by the shift update after
+     * the first delete, so key repeats keep the direction chosen on the initial press.
+     */
+    private boolean isForwardDelete(final Event event) {
+        if (!event.isKeyRepeat()) {
+            final var keyboard = KeyboardSwitcher.getInstance().getKeyboard();
+            mForwardDeleting = keyboard != null && keyboard.mId.getElement().isAlphabetShiftedManually()
+                    && !mConnection.hasSelection();
+        }
+        return mForwardDeleting;
+    }
+
+    private void handleForwardDeleteEvent(final InputTransaction inputTransaction) {
+        mSpaceState = SpaceState.NONE;
+        // finish composing in place: committing would move the cursor to the end of the word
+        if (mWordComposer.isComposingWord())
+            resetEntireInputState(mConnection.getExpectedSelectionStart(), mConnection.getExpectedSelectionEnd(), true);
+        sendDownUpKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL);
+        inputTransaction.requireShiftUpdate(InputTransaction.SHIFT_UPDATE_NOW);
+    }
+
     private void handleBackspaceEvent(final Event event, final InputTransaction inputTransaction,
             final String currentKeyboardScript) {
         mSpaceState = SpaceState.NONE;
