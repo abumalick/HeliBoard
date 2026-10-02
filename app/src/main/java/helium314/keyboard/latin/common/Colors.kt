@@ -444,9 +444,11 @@ class DefaultColors (
         adjustedBackgroundFilter = colorFilter(adjustedBackground)
         if (hasKeyBorders) {
             backgroundStateList = pressedStateList(brightenOrDarken(background, true), background)
+            // a 15% luminosity shift instead of brightenOrDarken, which is too subtle to notice a press
+            fun pressed(color: Int) = adjustLuminosityAndKeepAlpha(color, if (isBrightColor(color)) -0.15f else 0.15f)
             keyStateList = if (themeStyle == STYLE_HOLO) pressedStateList(keyBackground, keyBackground)
-                else pressedStateList(brightenOrDarken(keyBackground, true), keyBackground)
-            functionalKeyStateList = pressedStateList(brightenOrDarken(functionalKey, true), functionalKey)
+                else pressedStateList(pressed(keyBackground), keyBackground)
+            functionalKeyStateList = pressedStateList(pressed(functionalKey), functionalKey)
             actionKeyStateList = if (themeStyle == STYLE_HOLO) functionalKeyStateList
                 else pressedStateList(brightenOrDarken(accent, true), accent)
             spaceBarStateList = if (themeStyle == STYLE_HOLO) pressedStateList(spaceBar, spaceBar)
