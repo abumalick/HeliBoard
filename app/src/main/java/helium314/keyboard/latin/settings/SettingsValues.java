@@ -195,7 +195,7 @@ public class SettingsValues {
         mSuggestEmojis = prefs.getBoolean(Settings.PREF_SUGGEST_EMOJIS, Defaults.PREF_SUGGEST_EMOJIS);
         mInlineEmojiSearch = prefs.getBoolean(Settings.PREF_INLINE_EMOJI_SEARCH, Defaults.PREF_INLINE_EMOJI_SEARCH);
         mShowEmojiDescriptions = prefs.getBoolean(Settings.PREF_SHOW_EMOJI_DESCRIPTIONS, Defaults.PREF_SHOW_EMOJI_DESCRIPTIONS);
-        mKeyPreviewPopupOn = prefs.getBoolean(Settings.PREF_POPUP_ON, Defaults.PREF_POPUP_ON);
+        mKeyPreviewPopupOn = true; // always show the pressed key popup, ignoring a stored PREF_POPUP_ON
         mSlidingKeyInputPreviewEnabled = prefs.getBoolean(
                 DebugSettings.PREF_SLIDING_KEY_INPUT_PREVIEW, Defaults.PREF_SLIDING_KEY_INPUT_PREVIEW);
         mShowsVoiceInputKey = mInputAttributes.mShouldShowVoiceInputKey;

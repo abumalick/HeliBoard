@@ -454,7 +454,9 @@ class DefaultColors (
         } else {
             // need to set color to background if key borders are disabled, or there will be ugly keys
             backgroundStateList = pressedStateList(brightenOrDarken(background, true), background)
-            keyStateList = pressedStateList(keyBackground, Color.TRANSPARENT)
+            // keyBackground is barely distinguishable from background, so a press needs a stronger shift to be visible
+            val pressedKey = adjustLuminosityAndKeepAlpha(background, if (isBrightColor(background)) -0.15f else 0.15f)
+            keyStateList = pressedStateList(pressedKey, Color.TRANSPARENT)
             functionalKeyStateList = keyStateList
             actionKeyStateList = if (themeStyle == STYLE_HOLO) functionalKeyStateList
                 else pressedStateList(brightenOrDarken(accent, true), accent)
