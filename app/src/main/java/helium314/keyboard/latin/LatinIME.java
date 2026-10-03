@@ -1026,7 +1026,18 @@ public class LatinIME extends InputMethodService implements
                 FloatingKeyboardUtils.setFloating(mInputView);
             setNavigationBarColor();
             workaroundForHuaweiStatusBarIssue();
+            mirrorImeNavButtons();
         }
+    }
+
+    // With gesture navigation the framework draws the hide-keyboard and IME switcher buttons inside our own window.
+    // Mirroring their container puts the hide button on the right, where the thumb reaches it more easily.
+    @SuppressLint("DiscouragedApi")
+    private void mirrorImeNavButtons() {
+        final int id = Resources.getSystem().getIdentifier("input_method_navigation_bar_view", "id", "android");
+        final View buttons = id == 0 ? null : getWindow().getWindow().getDecorView().findViewById(id);
+        Log.i(TAG, "mirrorImeNavButtons: id=" + id + " view=" + buttons);
+        if (buttons != null) buttons.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
     }
 
     @Override
