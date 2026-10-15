@@ -1032,8 +1032,10 @@ public class LatinIME extends InputMethodService implements
 
     // With gesture navigation the framework draws the hide-keyboard and IME switcher buttons inside our own window.
     // Mirroring their container puts the hide button on the right, where the thumb reaches it more easily.
+    // Samsung already places the hide button on the right, so mirroring there would move it back to the left.
     @SuppressLint("DiscouragedApi")
     private void mirrorImeNavButtons() {
+        if ("samsung".equalsIgnoreCase(Build.MANUFACTURER)) return;
         final int id = Resources.getSystem().getIdentifier("input_method_navigation_bar_view", "id", "android");
         final View buttons = id == 0 ? null : getWindow().getWindow().getDecorView().findViewById(id);
         Log.i(TAG, "mirrorImeNavButtons: id=" + id + " view=" + buttons);
