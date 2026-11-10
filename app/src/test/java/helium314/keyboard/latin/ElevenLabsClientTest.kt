@@ -12,8 +12,9 @@ class ElevenLabsClientTest {
     @Test fun bodyContainsModelIdAndFilePart() {
         val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1, 2, 3), null, emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"model_id\""))
-        assertTrue(body.contains("scribe_v2"))
-        // no_verbatim is a scribe_v2-only flag and is what keeps fillers out of the transcript
+        assertTrue(body.contains("scribe_v3"))
+        assertTrue(body.contains("name=\"numbers_format\"\r\n\r\ndigits\r\n"))
+        // no_verbatim is what keeps fillers out of the transcript
         assertTrue(body.contains("name=\"no_verbatim\""))
         assertTrue(body.contains("\r\n\r\ntrue\r\n"))
         // tag_audio_events defaults to true server-side and annotates background noise
@@ -48,6 +49,22 @@ class ElevenLabsClientTest {
         val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1), "ar", emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"language_code\""))
         assertTrue(body.contains("\r\n\r\nar\r\n"))
+    }
+
+    @Test fun secondaryLanguagesAreSentAsOnePartEach() {
+        val body = ElevenLabsClient
+            .buildMultipartBody(byteArrayOf(1), "en", emptyList(), listOf("ar", "fr"))
+            .decodeToString(throwOnInvalidSequence = false)
+        assertEquals(2, Regex("name=\"secondary_language_codes\"").findAll(body).count())
+        assertTrue(body.contains("name=\"secondary_language_codes\"\r\n\r\nar\r\n"))
+        assertTrue(body.contains("name=\"secondary_language_codes\"\r\n\r\nfr\r\n"))
+    }
+
+    @Test fun secondaryLanguagesOmittedWithoutLanguageCode() {
+        val body = ElevenLabsClient
+            .buildMultipartBody(byteArrayOf(1), null, emptyList(), listOf("ar", "fr"))
+            .decodeToString(throwOnInvalidSequence = false)
+        assertFalse(body.contains("name=\"secondary_language_codes\""))
     }
 
     @Test fun bodyIsTerminatedByClosingBoundary() {

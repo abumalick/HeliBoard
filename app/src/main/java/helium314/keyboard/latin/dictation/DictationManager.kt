@@ -144,14 +144,16 @@ class DictationManager(private val latinIME: LatinIME) {
 
     private fun launchTranscription() {
         val token = latinIME.prefs().getString(Settings.PREF_ELEVENLABS_API_KEY, Defaults.PREF_ELEVENLABS_API_KEY).orEmpty()
-        // A plain tap lets Scribe detect the language: dictation here mixes French and English
-        // within one session, and forcing the keyboard's subtype transcribed the other language
-        // phonetically. The secondary key (still KeyCode.DICTATION_AUTO_LANG, whose name predates
-        // this swap) forces the subtype instead — worth having for Arabic, which Scribe detects
-        // less reliably.
-        val language = if (forceSubtypeLanguage) RichInputMethodManager.getInstance().currentSubtypeLocale.language else null
+        // A plain tap declares all of DICTATION_LANGUAGES: dictation here mixes them within one
+        // session, and with a single language the others came out phonetically. The subtype
+        // language (or the first entry, if it isn't one of them) goes first as a hint — Scribe
+        // still transcribes the other declared languages correctly. The secondary key (still KeyCode.DICTATION_AUTO_LANG, whose name predates
+        // this) forces the subtype language alone.
+        val subtypeLanguage = RichInputMethodManager.getInstance().currentSubtypeLocale.language
+        val language = if (forceSubtypeLanguage || subtypeLanguage in DICTATION_LANGUAGES) subtypeLanguage else DICTATION_LANGUAGES.first()
+        val secondaryLanguages = if (forceSubtypeLanguage) emptyList() else DICTATION_LANGUAGES - language
         transcribeJob = scope.launch {
-            val result = withContext(Dispatchers.IO) { ElevenLabsClient.transcribe(token, audioFile, language) }
+            val result = withContext(Dispatchers.IO) { ElevenLabsClient.transcribe(token, audioFile, language, secondaryLanguages) }
             if (!isActive) return@launch
             when (result) {
                 is TranscriptionResult.Success -> {
@@ -207,6 +209,7 @@ class DictationManager(private val latinIME: LatinIME) {
 
     companion object {
         private val TAG = DictationManager::class.simpleName
+        private val DICTATION_LANGUAGES = listOf("en", "ar", "fr")
         private const val SAMPLE_RATE_HZ = 16_000
         private const val BIT_RATE = 32_000
         // the recording is meant to end when the user stops it; this is only a backstop so a

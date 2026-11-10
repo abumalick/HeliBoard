@@ -16,7 +16,7 @@ sealed interface TranscriptionResult {
 object ElevenLabsClient {
 
     private const val ENDPOINT = "https://api.elevenlabs.io/v1/speech-to-text"
-    private const val MODEL_ID = "scribe_v2"
+    private const val MODEL_ID = "scribe_v3"
     private const val BOUNDARY = "----HeliBoardDictation7f3a9c"
     private const val FILE_NAME = "dictation.m4a"
     private const val CONNECT_TIMEOUT_MS = 10_000
@@ -28,6 +28,7 @@ object ElevenLabsClient {
         audio: ByteArray,
         languageCode: String?,
         keyterms: List<String> = BuildConfig.STT_KEYTERMS.toList(),
+        secondaryLanguageCodes: List<String> = emptyList(),
     ): ByteArray {
         val out = ByteArrayOutputStream()
         fun writeField(name: String, value: String) {
@@ -37,11 +38,14 @@ object ElevenLabsClient {
         }
 
         writeField("model_id", MODEL_ID)
-        // drops filler words, false starts and repeated words at the source; scribe_v2 only
+        // drops filler words, false starts and repeated words at the source; scribe_v2 and later
         writeField("no_verbatim", "true")
         // separate flag, defaults to true: annotates background noise as "(baby crying)" etc.
         writeField("tag_audio_events", "false")
+        writeField("numbers_format", "digits")
         if (languageCode != null) writeField("language_code", languageCode)
+        // the API rejects secondaries without a language_code (HTTP 500)
+        if (languageCode != null) for (code in secondaryLanguageCodes) writeField("secondary_language_codes", code)
         // jargon and proper nouns the model would otherwise mishear; one repeated part per term is
         // how the API takes a vocabulary. Validated and capped when baked into BuildConfig.
         for (term in keyterms) writeField("keyterms", term)
@@ -55,10 +59,10 @@ object ElevenLabsClient {
     }
 
     /** Blocking. Call from a background dispatcher. */
-    fun transcribe(apiKey: String, audioFile: File, languageCode: String?): TranscriptionResult {
+    fun transcribe(apiKey: String, audioFile: File, languageCode: String?, secondaryLanguageCodes: List<String>): TranscriptionResult {
         var connection: HttpURLConnection? = null
         return try {
-            val body = buildMultipartBody(audioFile.readBytes(), languageCode)
+            val body = buildMultipartBody(audioFile.readBytes(), languageCode, secondaryLanguageCodes = secondaryLanguageCodes)
             connection = (URL(ENDPOINT).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 doOutput = true
