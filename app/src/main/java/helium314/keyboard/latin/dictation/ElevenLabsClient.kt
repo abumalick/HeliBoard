@@ -42,7 +42,8 @@ object ElevenLabsClient {
         writeField("no_verbatim", "true")
         // separate flag, defaults to true: annotates background noise as "(baby crying)" etc.
         writeField("tag_audio_events", "false")
-        writeField("numbers_format", "digits")
+        // no numbers_format: v3 already writes digits by default, and sending it (even "digits")
+        // makes the API ignore no_verbatim
         if (languageCode != null) writeField("language_code", languageCode)
         // the API rejects secondaries without a language_code (HTTP 500)
         if (languageCode != null) for (code in secondaryLanguageCodes) writeField("secondary_language_codes", code)

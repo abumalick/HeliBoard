@@ -13,7 +13,7 @@ class ElevenLabsClientTest {
         val body = ElevenLabsClient.buildMultipartBody(byteArrayOf(1, 2, 3), null, emptyList()).decodeToString(throwOnInvalidSequence = false)
         assertTrue(body.contains("name=\"model_id\""))
         assertTrue(body.contains("scribe_v3"))
-        assertTrue(body.contains("name=\"numbers_format\"\r\n\r\ndigits\r\n"))
+        assertFalse(body.contains("name=\"numbers_format\""))
         // no_verbatim is what keeps fillers out of the transcript
         assertTrue(body.contains("name=\"no_verbatim\""))
         assertTrue(body.contains("\r\n\r\ntrue\r\n"))
